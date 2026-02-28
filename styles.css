@@ -268,6 +268,57 @@ html.manga-dissector-active .manga-dissector-overlay * {
   border-left: 2px solid #6c5ce7;
 }
 
+.manga-dissector-interactive {
+  line-height: 1.8;
+}
+
+.manga-dissector-hint-text {
+  font-size: 8px;
+  opacity: 0.5;
+  font-weight: 400;
+}
+
+/* Hoverable words */
+.manga-dissector-hover-word {
+  position: relative;
+  cursor: help;
+  border-bottom: 1px dotted rgba(108, 92, 231, 0.5);
+  transition: all 0.15s;
+}
+
+.manga-dissector-hover-word:hover {
+  background: rgba(108, 92, 231, 0.2);
+  border-bottom-color: #6c5ce7;
+}
+
+/* Word tooltip - uses JS positioning */
+.manga-dissector-word-tooltip {
+  position: fixed;
+  background: #1a1a2e;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 400;
+  white-space: nowrap;
+  z-index: 2147483647;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(108, 92, 231, 0.3);
+  pointer-events: none;
+  animation: manga-dissector-tooltip-in 0.15s ease;
+}
+
+@keyframes manga-dissector-tooltip-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .manga-dissector-reading {
   font-size: 10px;
   color: #aaa;

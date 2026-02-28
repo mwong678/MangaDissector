@@ -9,6 +9,7 @@
   let selectionBox = null;
   let startX, startY;
   let tooltipEl = null;
+  let wordTooltipEl = null;  // Floating tooltip for word hover
   let resultsCache = new Map();
   let boundBlockEvent = null;
   let keepTooltipOpen = false;  // Prevent closing during capture/analyze
@@ -336,7 +337,7 @@
           );
           
           // Use high quality JPEG for better compression while maintaining quality
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.70);
           console.log('[MangaDissector] Captured region:', { 
             selection: `${left},${top} ${width}x${height}`,
             src: `${srcX.toFixed(0)},${srcY.toFixed(0)} ${srcWidth.toFixed(0)}x${srcHeight.toFixed(0)}`,
@@ -366,16 +367,30 @@
       loading: true
     });
 
+    const startTime = performance.now();
+    
     try {
       const response = await chrome.runtime.sendMessage({
         type: 'ANALYZE_IMAGE',
         imageData: imageData
       });
+      
+      const clientTotalMs = Math.round(performance.now() - startTime);
 
       if (response.error) {
         console.log('[MangaDissector] API Error:', response.error);
         updateTooltipContent({ error: response.error });
       } else {
+        // Log timing info
+        if (response.timing) {
+          const { apiMs, imageSizeKB, totalMs } = response.timing;
+          console.log('[MangaDissector] ⏱️ Timing:', {
+            'Image size': `${imageSizeKB}KB`,
+            'API call': `${apiMs}ms`,
+            'Backend total': `${totalMs}ms`,
+            'Client total': `${clientTotalMs}ms`
+          });
+        }
         console.log('[MangaDissector] API Result:', response.result);
         updateTooltipContent({ result: response.result });
       }
@@ -519,6 +534,62 @@
     setTimeout(() => {
       document.addEventListener('click', closeTooltipOnClickOutside);
     }, 100);
+    
+    // Setup word hover tooltips
+    setupWordTooltips(tooltipEl);
+  }
+  
+  function setupWordTooltips(container) {
+    container.addEventListener('mouseenter', (e) => {
+      if (e.target.classList.contains('manga-dissector-hover-word')) {
+        showWordTooltip(e.target);
+      }
+    }, true);
+    
+    container.addEventListener('mouseleave', (e) => {
+      if (e.target.classList.contains('manga-dissector-hover-word')) {
+        hideWordTooltip();
+      }
+    }, true);
+  }
+  
+  function showWordTooltip(wordEl) {
+    hideWordTooltip();
+    
+    const text = wordEl.getAttribute('data-tooltip');
+    if (!text) return;
+    
+    wordTooltipEl = document.createElement('div');
+    wordTooltipEl.className = 'manga-dissector-word-tooltip';
+    wordTooltipEl.textContent = text;
+    document.body.appendChild(wordTooltipEl);
+    
+    // Position above the word
+    const rect = wordEl.getBoundingClientRect();
+    const tooltipRect = wordTooltipEl.getBoundingClientRect();
+    
+    let left = rect.left + rect.width / 2 - tooltipRect.width / 2;
+    let top = rect.top - tooltipRect.height - 8;
+    
+    // Keep within viewport
+    if (left < 5) left = 5;
+    if (left + tooltipRect.width > window.innerWidth - 5) {
+      left = window.innerWidth - tooltipRect.width - 5;
+    }
+    if (top < 5) {
+      // Show below instead
+      top = rect.bottom + 8;
+    }
+    
+    wordTooltipEl.style.left = left + 'px';
+    wordTooltipEl.style.top = top + 'px';
+  }
+  
+  function hideWordTooltip() {
+    if (wordTooltipEl) {
+      wordTooltipEl.remove();
+      wordTooltipEl = null;
+    }
   }
 
   function setupDrag(element) {
@@ -609,25 +680,47 @@
   }
 
   function formatResult(result) {
-    // Parse the result from GPT
-    // Expected format includes: original text, translation, and breakdown
-    
     let html = '<div class="manga-dissector-result">';
     
-    if (result.originalText) {
+    if (result.originalText && result.breakdown && result.breakdown.length > 0) {
+      // Create interactive original text with hoverable words
+      let interactiveText = result.originalText;
+      
+      // Sort breakdown by word length (longest first) to avoid partial replacements
+      const sortedBreakdown = [...result.breakdown].sort((a, b) => b.word.length - a.word.length);
+      
+      // Replace each word with a hoverable span
+      for (const item of sortedBreakdown) {
+        const word = escapeHtml(item.word);
+        const reading = item.reading ? escapeHtml(item.reading) : '';
+        const meaning = escapeHtml(item.meaning);
+        const type = item.type ? escapeHtml(item.type) : '';
+        
+        const tooltip = `${reading ? reading + ' — ' : ''}${meaning}${type ? ' [' + type + ']' : ''}`;
+        
+        const span = `<span class="manga-dissector-hover-word" data-tooltip="${tooltip}">${word}</span>`;
+        
+        // Only replace if not already wrapped
+        if (!interactiveText.includes(`data-tooltip`)) {
+          interactiveText = interactiveText.replace(item.word, span);
+        } else {
+          // Check if this specific word is already wrapped
+          const regex = new RegExp(`(?<!data-tooltip="[^"]*")(?<!>)${escapeRegex(item.word)}(?![^<]*<\/span>)`, 'g');
+          interactiveText = interactiveText.replace(regex, span);
+        }
+      }
+      
+      html += `
+        <div class="manga-dissector-section">
+          <div class="manga-dissector-label">Original <span class="manga-dissector-hint-text">(hover for details)</span></div>
+          <div class="manga-dissector-original manga-dissector-interactive">${interactiveText}</div>
+        </div>
+      `;
+    } else if (result.originalText) {
       html += `
         <div class="manga-dissector-section">
           <div class="manga-dissector-label">Original</div>
           <div class="manga-dissector-original">${escapeHtml(result.originalText)}</div>
-        </div>
-      `;
-    }
-
-    if (result.reading) {
-      html += `
-        <div class="manga-dissector-section">
-          <div class="manga-dissector-label">Reading</div>
-          <div class="manga-dissector-reading">${escapeHtml(result.reading)}</div>
         </div>
       `;
     }
@@ -639,30 +732,6 @@
           <div class="manga-dissector-translation">${escapeHtml(result.translation)}</div>
         </div>
       `;
-    }
-
-    if (result.breakdown && result.breakdown.length > 0) {
-      html += `
-        <details class="manga-dissector-section manga-dissector-collapsible">
-          <summary class="manga-dissector-label manga-dissector-collapse-toggle">
-            Breakdown
-            <span class="manga-dissector-collapse-icon"></span>
-          </summary>
-          <div class="manga-dissector-breakdown">
-      `;
-      
-      for (const item of result.breakdown) {
-        html += `
-          <div class="manga-dissector-word">
-            <span class="manga-dissector-word-japanese">${escapeHtml(item.word)}</span>
-            ${item.reading ? `<span class="manga-dissector-word-reading">(${escapeHtml(item.reading)})</span>` : ''}
-            <span class="manga-dissector-word-meaning">— ${escapeHtml(item.meaning)}</span>
-            ${item.type ? `<span class="manga-dissector-word-type">[${escapeHtml(item.type)}]</span>` : ''}
-          </div>
-        `;
-      }
-      
-      html += '</div></details>';
     }
 
     if (result.notes) {
@@ -685,6 +754,10 @@
 
     html += '</div>';
     return html;
+  }
+  
+  function escapeRegex(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
   function escapeHtml(text) {

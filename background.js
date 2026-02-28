@@ -43,6 +43,8 @@ async function handleCaptureTab(tab, sendResponse) {
 }
 
 async function handleAnalyzeImage(imageData, sendResponse) {
+  const startTime = performance.now();
+  
   try {
     const result = await chrome.storage.local.get(['openaiApiKey']);
     const apiKey = result.openaiApiKey;
@@ -52,8 +54,16 @@ async function handleAnalyzeImage(imageData, sendResponse) {
       return;
     }
 
-    const analysisResult = await analyzeWithGPT(apiKey, imageData);
-    sendResponse({ result: analysisResult });
+    const { result: analysisResult, timing } = await analyzeWithGPT(apiKey, imageData);
+    const totalMs = Math.round(performance.now() - startTime);
+    
+    sendResponse({ 
+      result: analysisResult, 
+      timing: {
+        ...timing,
+        totalMs
+      }
+    });
   } catch (error) {
     console.error('Analysis error:', error);
     sendResponse({ error: error.message });
@@ -99,6 +109,12 @@ ONLY if the image contains absolutely no Japanese text at all, respond with:
 
 Be thorough - read EVERY column of text visible in the image.`;
 
+  // Calculate image size for logging
+  const imageSizeKB = Math.round(imageData.length * 0.75 / 1024); // base64 to bytes approx
+  console.log(`[MangaDissector] Image size: ${imageSizeKB}KB`);
+  
+  const apiStartTime = performance.now();
+  
   const response = await fetch(OPENAI_API_URL, {
     method: 'POST',
     headers: {
@@ -134,6 +150,8 @@ Be thorough - read EVERY column of text visible in the image.`;
     })
   });
 
+  const apiTime = Math.round(performance.now() - apiStartTime);
+
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.error?.message || `API request failed: ${response.status}`);
@@ -143,6 +161,7 @@ Be thorough - read EVERY column of text visible in the image.`;
   const content = data.choices?.[0]?.message?.content;
 
   console.log('[MangaDissector] API Response:', content);
+  console.log(`[MangaDissector] API call took: ${apiTime}ms`);
 
   if (!content) {
     throw new Error('No response from API');
@@ -158,7 +177,15 @@ Be thorough - read EVERY column of text visible in the image.`;
     }
     const result = JSON.parse(jsonMatch[0]);
     console.log('[MangaDissector] Parsed result:', result);
-    return result;
+    
+    // Return result with timing info
+    return { 
+      result, 
+      timing: { 
+        apiMs: apiTime,
+        imageSizeKB: imageSizeKB
+      } 
+    };
   } catch (parseError) {
     console.error('[MangaDissector] Parse error:', parseError, 'Content:', content);
     throw new Error('Failed to parse analysis result');
