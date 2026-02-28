@@ -11,6 +11,7 @@
   let tooltipEl = null;
   let resultsCache = new Map();
   let boundBlockEvent = null;
+  let keepTooltipOpen = false;  // Prevent closing during capture/analyze
 
   // Listen for messages from popup or background
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -37,6 +38,7 @@
   function activateSelectionMode() {
     if (isSelectionMode) return;
     isSelectionMode = true;
+    keepTooltipOpen = true;  // Keep tooltip open during selection
 
     // Block all page interactions
     document.documentElement.classList.add('manga-dissector-active');
@@ -201,12 +203,8 @@
 
     // Capture the selected region
     try {
-      // Flash the selection box red briefly so user can verify the area
-      if (selectionBox) {
-        selectionBox.style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
-        selectionBox.style.border = '2px solid red';
-      }
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // Keep tooltip open during capture/analyze
+      keepTooltipOpen = true;
       
       // Make overlay transparent instead of hiding it
       // This prevents any layout shifts that could affect coordinates
@@ -221,9 +219,13 @@
       const imageData = await captureRegion(left, top, width, height);
       deactivateSelectionMode();
       await analyzeImage(imageData, left, top, width, height);
+      
+      // Allow closing again after a short delay
+      setTimeout(() => { keepTooltipOpen = false; }, 500);
     } catch (error) {
       console.error('Capture error:', error);
       deactivateSelectionMode();
+      keepTooltipOpen = false;
       showError('Failed to capture region: ' + error.message);
     }
   }
@@ -590,6 +592,15 @@
   }
 
   function closeTooltipOnClickOutside(e) {
+    // Don't close if in selection mode or during capture/analyze
+    if (isSelectionMode || keepTooltipOpen) return;
+    
+    // Don't close if clicking on the overlay or selection box
+    if (e.target.classList.contains('manga-dissector-overlay') ||
+        e.target.classList.contains('manga-dissector-selection')) {
+      return;
+    }
+    
     if (tooltipEl && !tooltipEl.contains(e.target)) {
       tooltipEl.remove();
       tooltipEl = null;
