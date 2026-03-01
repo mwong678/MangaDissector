@@ -1,0 +1,42 @@
+╔══════════════════════════════════════════════════════════════════╗
+║                    MANGA DISSECTOR - INSTALL GUIDE                ║
+╚══════════════════════════════════════════════════════════════════╝
+
+STEP 1: OPEN CHROME EXTENSIONS
+   • Open Google Chrome
+   • Type this in the address bar: chrome://extensions
+   • Press Enter
+
+STEP 2: ENABLE DEVELOPER MODE
+   • Look at the TOP RIGHT corner of the page
+   • Find the switch that says "Developer mode"
+   • Turn it ON (switch should be blue)
+
+STEP 3: LOAD THE EXTENSION
+   • Click the "Load unpacked" button (top left area)
+   • Navigate to THIS folder (the one containing this file)
+   • Click "Select Folder"
+
+STEP 4: SET UP YOUR API KEY
+   • Click the puzzle piece icon (🧩) in Chrome toolbar
+   • Click "Manga Dissector"
+   • Paste your OpenAI API key
+   • Click "Save API Key"
+
+   Don't have an API key? Get one free at:
+   https://platform.openai.com/api-keys
+
+
+══════════════════════════════════════════════════════════════════
+
+HOW TO USE:
+
+   1. Go to any manga website
+   2. Press Alt+M on your keyboard
+   3. Draw a box around Japanese text
+   4. Wait for translation
+   5. Hover over words to see meanings!
+
+══════════════════════════════════════════════════════════════════
+
+NEED HELP? Contact the person who shared this with you!

@@ -1,58 +1,97 @@
 # Manga Dissector
 
-A Chrome extension for learning Japanese while reading manga. Instead of replacing Japanese text with translations, this extension lets you select any manga text to see:
+A Chrome extension for learning Japanese while reading manga. Select any manga text to see translations and word-by-word breakdowns - perfect for Japanese learners!
 
-- The original Japanese text with reading (furigana)
-- English translation
-- Word-by-word breakdown with meanings and grammar
-- Cultural/usage notes
+![Demo](https://img.shields.io/badge/Status-Active-success)
 
-## Features
+## ✨ Features
 
-- **Select Any Text**: Click and drag over manga panels to analyze text
-- **Detailed Breakdowns**: See each word's reading, meaning, and grammatical role
-- **Non-Intrusive**: The original manga stays untouched until you want help
-- **Keyboard Shortcut**: Press `Alt+M` to quickly enter selection mode
+- **Hover for Details**: Hover over any word in the original text to see its reading and meaning
+- **Full Translation**: See the complete English translation
+- **Keyboard Shortcut**: Press `Alt+M` to quickly select text
+- **Non-Intrusive**: The original manga stays untouched
 
-## Installation
+---
 
-1. Clone or download this repository
-2. Open Chrome and go to `chrome://extensions/`
-3. Enable "Developer mode" (toggle in top-right corner)
-4. Click "Load unpacked" and select this folder
-5. Click the extension icon and enter your OpenAI API key
+## 📥 Installation (Easy Mode)
 
-## Usage
+### Step 1: Download
+1. Go to the [**Releases page**](../../releases/latest)
+2. Download the `.zip` file (e.g., `MangaDissector-v1.0.0.zip`)
 
-1. Navigate to any webpage with manga images
-2. Press `Alt+M` or click the extension icon and select "Select Region to Analyze"
-3. Draw a rectangle over the Japanese text you want to understand
-4. View the translation and detailed breakdown in the tooltip
+### Step 2: Unzip
+1. Find the downloaded file (usually in your Downloads folder)
+2. **Right-click** the zip file
+3. Select **"Extract All"** (Windows) or just **double-click** (Mac)
+4. Remember where you extracted it!
 
-## API Key
+### Step 3: Add to Chrome
+1. Open Chrome
+2. Type `chrome://extensions` in the address bar and press Enter
+3. Turn ON **"Developer mode"** (toggle switch in the top-right corner)
+4. Click the **"Load unpacked"** button
+5. Navigate to the folder you extracted and select it
+6. The extension is now installed! ✅
 
-This extension uses GPT-4o-mini for OCR and translation. You'll need an OpenAI API key:
+### Step 4: Set Up API Key
+1. Click the puzzle piece icon (🧩) in Chrome's toolbar
+2. Click **"Manga Dissector"**
+3. Enter your OpenAI API key (see below for how to get one)
+4. Click **"Save API Key"**
+
+---
+
+## 🔑 Getting an OpenAI API Key
 
 1. Go to [platform.openai.com](https://platform.openai.com)
-2. Create an API key
-3. Enter it in the extension popup
+2. Sign up or log in
+3. Go to [API Keys](https://platform.openai.com/api-keys)
+4. Click **"Create new secret key"**
+5. Copy the key and paste it into the extension
 
-The key is stored locally in Chrome and only sent to OpenAI's API.
+**Cost**: Very affordable! Each translation costs less than $0.001 (a fraction of a penny).
 
-## Cost
+---
 
-GPT-4o-mini is very affordable:
-- ~$0.15 per million input tokens
-- A typical manga panel analysis costs less than $0.001
+## 🎮 How to Use
 
-## Tech Stack
+1. Go to any website with manga
+2. Press **`Alt+M`** on your keyboard (or click the extension icon → "Select Region")
+3. **Click and drag** a box around the Japanese text you want to translate
+4. Wait a few seconds for the translation
+5. **Hover over words** in the original text to see their meanings!
 
+---
+
+## 💡 Tips
+
+- Select **just the text bubble**, not the whole page
+- Works best with clear, high-contrast text
+- The window stays open - select new text to update it
+- Drag the translation window to move it around
+- Use the corner to resize it
+
+---
+
+## 🔒 Privacy
+
+- Your API key stays on your computer (never sent anywhere except OpenAI)
+- Images are sent directly to OpenAI for translation
+- No data is collected by this extension
+
+---
+
+## 🛠 For Developers
+
+If you want to modify the extension:
+
+```bash
+git clone https://github.com/YOUR_USERNAME/MangaDissector.git
+cd MangaDissector
+# Load unpacked in Chrome from this folder
+```
+
+### Tech Stack
 - Chrome Extension Manifest V3
-- GPT-4o-mini Vision API for OCR + translation
+- GPT-4o-mini Vision API
 - Vanilla JavaScript (no dependencies)
-
-## Privacy
-
-- Your API key is stored only in Chrome's local storage
-- Images are sent directly to OpenAI's API (no intermediary servers)
-- No data is collected or stored by this extension

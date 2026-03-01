@@ -1,0 +1,66 @@
+name: Release Extension
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.0.0)'
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Create extension package
+        run: |
+          mkdir -p dist
+          zip -r dist/MangaDissector-v${{ steps.version.outputs.version }}.zip \
+            manifest.json \
+            background.js \
+            content.js \
+            popup.html \
+            popup.js \
+            styles.css \
+            icons/ \
+            INSTALL.txt
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Manga Dissector v${{ steps.version.outputs.version }}
+          body: |
+            ## Installation Instructions
+            
+            1. **Download** the `MangaDissector-v${{ steps.version.outputs.version }}.zip` file below
+            2. **Unzip** the downloaded file to a folder on your computer
+            3. **Open Chrome** and go to `chrome://extensions`
+            4. **Enable** "Developer mode" (toggle in top right corner)
+            5. **Click** "Load unpacked" button
+            6. **Select** the unzipped folder
+            7. **Done!** Click the extension icon and enter your OpenAI API key
+            
+            ---
+            
+            Need an OpenAI API key? Get one at https://platform.openai.com/api-keys
+          files: dist/MangaDissector-v${{ steps.version.outputs.version }}.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
