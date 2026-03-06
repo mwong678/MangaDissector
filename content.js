@@ -337,7 +337,7 @@
           );
           
           // Use high quality JPEG for better compression while maintaining quality
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.70);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
           console.log('[MangaDissector] Captured region:', { 
             selection: `${left},${top} ${width}x${height}`,
             src: `${srcX.toFixed(0)},${srcY.toFixed(0)} ${srcWidth.toFixed(0)}x${srcHeight.toFixed(0)}`,
