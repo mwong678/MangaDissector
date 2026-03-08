@@ -460,7 +460,6 @@
       e.stopPropagation();
       tooltipEl.remove();
       tooltipEl = null;
-      document.removeEventListener('click', closeTooltipOnClickOutside);
     };
     header.appendChild(closeBtn);
     tooltipEl.appendChild(header);
@@ -530,11 +529,6 @@
     // Setup resize functionality
     setupResize(resizeHandle, tooltipEl);
 
-    // Click outside to close
-    setTimeout(() => {
-      document.addEventListener('click', closeTooltipOnClickOutside);
-    }, 100);
-    
     // Setup word hover tooltips
     setupWordTooltips(tooltipEl);
   }
@@ -649,10 +643,10 @@
 
     document.addEventListener('mousemove', (e) => {
       if (!isResizing) return;
-      
+
       const newWidth = Math.max(250, startWidth + (e.clientX - startX));
       const newHeight = Math.max(150, startHeight + (e.clientY - startY));
-      
+
       element.style.width = newWidth + 'px';
       element.style.height = newHeight + 'px';
     });
@@ -660,23 +654,7 @@
     document.addEventListener('mouseup', () => {
       isResizing = false;
     });
-  }
 
-  function closeTooltipOnClickOutside(e) {
-    // Don't close if in selection mode or during capture/analyze
-    if (isSelectionMode || keepTooltipOpen) return;
-    
-    // Don't close if clicking on the overlay or selection box
-    if (e.target.classList.contains('manga-dissector-overlay') ||
-        e.target.classList.contains('manga-dissector-selection')) {
-      return;
-    }
-    
-    if (tooltipEl && !tooltipEl.contains(e.target)) {
-      tooltipEl.remove();
-      tooltipEl = null;
-      document.removeEventListener('click', closeTooltipOnClickOutside);
-    }
   }
 
   function formatResult(result) {
